@@ -75,6 +75,7 @@ def chart_3D(mass, a, b):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(x, y, z, label='conversion')
+    plt.savefig('график преобразования')
     plt.show()
 
 
@@ -98,6 +99,7 @@ def chart(conversion_points, a, b):
     plt.ylabel("phase", fontsize=10)
     plt.title("Фаза оптического сигнала", fontsize=10)
     plt.grid(True)
+    plt.savefig('Амплитуда и фаза')
     plt.show()
 
 

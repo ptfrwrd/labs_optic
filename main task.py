@@ -17,58 +17,47 @@
     3. построить график амплитуды и фазы преобразования
 """
 
-
 import cmath
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.special as scp
+from mpl_toolkits.mplot3d import Axes3D
 
-
+# входное ядро
 def f_k(a, b, n, k, betta):
     h_x = (b - a) / n
     x_k = a + k * h_x
-    return (1j*betta*x_k)
+    return cmath.exp(1j * betta * x_k)
 
 
-def hermite(x):
-    H_4 = cmath.exp(x ** 2) * diff(x)
-    return H_4
+# полином Эрмита, n - порядок
+def hermite(n, x):
+    H_n= scp.eval_hermite(n ,x)
+    return H_n
 
 
-def diff(x):
-    exp = (4 * x ** 2 - 2) * cmath.exp(-x ** 2)
-    return exp
-
-
-def kernel(e, alfa, x):
-    Kernel = cmath.exp(-alfa * x ** 2 * e ** 2) * hermite(x*e)
+# ядро из варианта
+def kernel(e, alpha, x, n):
+    Kernel = cmath.exp(-alpha * x ** 2 * e ** 2) * hermite(n, x*e)
     return Kernel
 
 
-def conversion(p, q, m, n, alfa, a, b, betta):
+# преобразование
+def conversion(p, q, m, n, alpha, a, b, betta, n_hermite):
     res = []
     temp = 0
     h_e = (q - p) / m
-    for l in range(0, n):
+    for l in range(0, m):
         e_l = p + l * h_e
-        for k in range(0, n-1):
+        for k in range(0, n):
             h_x = (b - a) / n
             x_k = a + k * h_x
-            temp += kernel(e_l, alfa, x_k) * f_k(a, b, n, k, betta) * h_x
+            temp += kernel(e_l, alpha, x_k, n_hermite) * f_k(a, b, n, k, betta) * h_x
         res.append(temp)
     return res
 
 
-def interval():
-    mass = []
-    for i in np.arange(-cmath.pi, cmath.pi):
-        mass.append(i)
-    return mass
-
-
-def phase(betta, x_points):
-    return betta * x_points
-
-
+# Графики для оптического сигнала
 def signal_chart(betta, a, b):
     x_points, y_points = [],[]
 
@@ -82,33 +71,16 @@ def signal_chart(betta, a, b):
     plt.xlabel("x", fontsize=10)
     plt.ylabel("A", fontsize=10)
     plt.grid(True)
-    phase_points = []
     x_points.clear()
 
-    # [-pi,pi]
-    for x in np.arange(- np.pi,  2 * np.pi, np.pi):
-        x_points.append(x)
-        phase_points.append(phase(betta, x))
-
-    # [-3pi, pi]
-    x_points_left = []
-    phase_points_left = []
-    for x in np.arange(- 3 * np.pi,  0, np.pi):
-        x_points_left.append(x)
-        phase_points_left.append(phase(betta, x + 2*np.pi))
-
-
-    # [pi, 3pi]
-    x_points_right = []
-    phase_points_right = []
-    for x in np.arange(np.pi, 4 * np.pi, np.pi):
-        x_points_right.append(x)
-        phase_points_right.append(phase(betta, x - 2 * np.pi))
-
     plt.subplot(2, 1, 2)
-    plt.plot(x_points, phase_points, color='blue')
-    plt.plot(x_points_left, phase_points_left, color = 'blue')
-    plt.plot(x_points_right, phase_points_right, color='blue')
+    phase_points = []
+    x_p = np.linspace(-3.0, 3.0, 1000)
+    for i in x_p:
+        temp = np.angle(np.exp(1j * i * betta))
+        phase_points.append(temp)
+    plt.plot(x_p, phase_points)
+
     plt.xlabel("x", fontsize=10)
     plt.ylabel("phase", fontsize=10)
     plt.title("Фаза оптического сигнала", fontsize=10)
@@ -116,33 +88,29 @@ def signal_chart(betta, a, b):
     plt.show()
 
 
+# подсчёт амплитуды для преобразования
 def amplitude_conversion(mass):
     abs_mass = []
     for i in range(len(mass)):
         abs_mass.append(np.sqrt(mass[i].imag ** 2 + mass[i].real ** 2))
+    print(abs_mass)
     return abs_mass
 
-def phase_conversion(mass):
-    phase_points = []
-    for i in range(len(mass)):
-        if mass[i].imag < 0:
-            phase_points.append(3 * np.pi / 2)
-        if mass[i].imag > 0:
-            phase_points.append(np.pi / 2)
-    return phase_points
 
-
-def conversion_chart(amplitide, phase, a, b, n):
+# графики для преобразования
+def conversion_chart(mass, a, b, n):
     x_points = np.linspace(float(a), float(b), n)
     plt.subplot(2, 1, 1)
-    plt.plot(x_points, amplitide, color='red')
+    plt.plot(x_points, amplitude_conversion(mass), color='red')
     plt.title("Амплитуда преобразования", fontsize=10)
     plt.xlabel("x", fontsize=10)
     plt.ylabel("A", fontsize=10)
     plt.grid(True)
-
     plt.subplot(2, 1, 2)
-    plt.plot(x_points, phase, color='blue')
+    pha = []
+    for i in range(len(mass)):
+        pha.append(np.angle(mass[i]))
+    plt.plot(x_points, pha, color='blue')
     plt.title("Фаза преобразования", fontsize=10)
     plt.xlabel("x", fontsize=10)
     plt.ylabel("phase", fontsize=10)
@@ -150,30 +118,36 @@ def conversion_chart(amplitide, phase, a, b, n):
     plt.show()
 
 
+# 3D график
+def chart_3D(mass, a, b):
+    x = np.linspace(float(a), float(b), len(mass))
+    y = []
+    z = []
+    for i in range(len(mass)):
+        y.append(mass[i].real)
+        z.append(mass[i].imag)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(x, y, z, label='conversion')
+    plt.show()
+
 if __name__ == '__main__':
     p, a, q, b = -3, -3, 3, 3
-    m, n = 1000, 1000
+    m, n = 100, 100
     alfa = 1
     betta = 3
     mass = []
-    mass = conversion(p, q, m, n, alfa, a, b, betta)
-    x = np.linspace(float(a), float(b), len(mass))
-
-    con_amplitude = amplitude_conversion(mass)
-    print(con_amplitude)
-    con_phase = phase_conversion(mass)
-    for i in range(len(mass)):
-        if mass[i].imag < 0:
-            print (mass[i], "  ", con_phase[i])
-        if mass[i].imag > 0:
-            print(mass[i], " ", con_phase[i])
-
-    signal_chart(betta, a , b)
-    # график преобразования
-    img=[]
-    for i in range(n):
-        img.append(mass[i].imag)
-    plt.plot(x, img)
+    x = np.linspace(-5, 5, 1000)
+    h = []
+    for i in x:
+        h.append(hermite(4,i))
+    plt.plot(x, h)
     plt.show()
-
-    conversion_chart(con_amplitude, con_phase, a, b, n)
+    n_herm = 4
+    mass = conversion(p, q, m, n, alfa, a, b, betta, n_herm)
+    print(mass)
+    chart_3D(mass, a, b)
+    x = np.linspace(float(a), float(b), len(mass))
+    signal_chart(betta, a, b)
+    conversion_chart(mass, a, b, n)

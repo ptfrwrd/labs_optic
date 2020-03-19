@@ -2,7 +2,7 @@
     TO DO: двумерное преобразование Фурье.
     [u,v] = [-4,4]
     sigma ** 2 = 1
-    K(x, y, u, v) = exp( - 2 * pi * i * (x*u - y*v)
+    K(x, y, u, v) = exp( - 2 * pi * i * (x*u + y*v)
     f(x, y) = H_2(x) * H_3(x) * exp( (-x **2 - y **2)/ sigma ** 2)
 
 """

@@ -13,19 +13,24 @@ import scipy.special as scp
 import numpy as np
 import matplotlib.pyplot as plt
 
+T = 1
+
+def rect(x, T):
+    return abs(x) < T / 2.0
+
 
 # полином Эрмита, n - степень
 def hermite(n, x):
-    H_n= scp.eval_hermite(n, x)
+    H_n= scp.eval_hermite(n, x) * np.exp(-x**2)
     return H_n
 
 
 # подсчёт функции
 def integral_function(x, sigma, u, n_herm):
-    exp_f = cmath.exp(- x ** 2 / sigma ** 2)
+    exp_f = 1 #cmath.exp(- x ** 2 / sigma ** 2)
     exp_K = cmath.exp(- 1j * 2 * np.pi * x * u)
-    n_hermite = hermite(n_herm, x)
-    return exp_f * exp_K * n_hermite
+    #n_hermite = hermite(n_herm, x)
+    return exp_f * exp_K * rect(x, T)
 
 
 # численный подсчёт
@@ -86,23 +91,21 @@ def chart(conversion_points, a, b, size):
     y = np.linspace(float(a), float(b), 100)
     amplitude_conv = amplitude(conversion_points, size)
     fig, ax = plt.subplots()
-    ax.imshow(amplitude_conv)
-    fig.set_figwidth(6)
-    fig.set_figheight(6)
+    ax.imshow(amplitude_conv, extent=(a,b,a,b))
+
     plt.savefig("амплитуда.png")
     plt.show()
     phase_con = phase(conversion_points, size)
     fig, ax = plt.subplots()
-    ax.imshow(phase_con)
-    fig.set_figwidth(6)
-    fig.set_figheight(6)
+    ax.imshow(phase_con, extent=(a,b,a,b))
+
     plt.savefig("фаза.png")
     plt.show()
 
 
 if __name__ == '__main__':
     a, b = -3, 3
-    n, m = 100, 100
+    n, m = 1000, 1000
     sigma = 1
     n_herm_x, n_herm_y = 2, 3
     u, v = -4, 4

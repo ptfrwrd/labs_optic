@@ -45,17 +45,23 @@ def kernel(e, alpha, x, n):
 # преобразование
 def conversion(p, q, m, n, alpha, a, b, betta, n_hermite):
     res = []
-    temp = 0
     h_e = (q - p) / m
+    temp = 0
     for l in range(0, m):
         e_l = p + l * h_e
-        for k in range(0, n):
-            h_x = (b - a) / n
-            x_k = a + k * h_x
-            temp += kernel(e_l, alpha, x_k, n_hermite) * f_k(a, b, n, k, betta) * h_x
+        temp = series(e_l, alpha, n_hermite, a, b,n, betta)
         res.append(temp)
     return res
 
+
+def series(e_l, alpha, n_hermite, a, b,n, betta):
+    temp = 0
+    h_x = (b - a) / n
+    x_k = a
+    for k in range(0, n):
+        x_k += h_x
+        temp += kernel(e_l, alpha, x_k, n_hermite) * f_k(a, b, n, k, betta) * h_x
+    return temp
 
 # Графики для оптического сигнала
 def signal_chart(betta, a, b):

@@ -9,10 +9,9 @@
 
 
 import cmath
+import scipy.special as scp
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.special as scp
-from mpl_toolkits.mplot3d import Axes3D
 
 
 # полином Эрмита, n - степень
@@ -50,56 +49,54 @@ def result(a, b, u, v, n, m, sigma, n_herm_x, n_herm_y):
     y_part = numerical_method(a, b, n, sigma, n_herm_y, u, v, m)
 
     result_conversion = []
-    for i in range(len(x_part)):
-        result_conversion.append(x_part[i]*y_part[i])
-    chart(result_conversion, a, b)
+    size = len(x_part)
+    for i in range(size):
+        result_conversion.append([])
+        for j in range(size):
+            result_conversion[i].append(x_part[i] * y_part[j])
+    chart(result_conversion, a, b, size)
     return result_conversion
 
+
 # амплитуда преобразования
-def amplitude(conversion_points):
+def amplitude(conversion_points, size):
     amplitude_conv = []
-    for i in range(len(conversion_points)):
-        amplitude_conv.append(np.sqrt(conversion_points[i].imag ** 2 +
-                                      + conversion_points[i].real ** 2))
+    for i in range(size):
+        amplitude_conv.append([])
+        for j in range(size):
+            amplitude_conv[i].append(np.sqrt(conversion_points[i][j].imag ** 2 +
+                                      + conversion_points[i][j].real ** 2))
     return amplitude_conv
 
-# 3D график
-def chart_3D(mass, a, b):
-    x = np.linspace(float(a), float(b), len(mass))
-    y = []
-    z = []
-    for i in range(len(mass)):
-        y.append(mass[i].real)
-        z.append(mass[i].imag)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot(x, y, z, label='conversion')
-    plt.savefig('график преобразования')
-    plt.show()
+
+def phase(conversion_points, size):
+    phase_con = []
+    for i in range(size):
+        phase_con.append([])
+        for j in range(size):
+            phase_con[i].append(np.angle(conversion_points[i][j]))
+    return phase_con
 
 
 # построение графика
-def chart(conversion_points, a, b):
-    x_points = np.linspace(float(a), float(b), 100)
-    y_points = amplitude(conversion_points)
-    plt.subplot(2, 1, 1)
-    plt.plot(x_points, y_points, color='red')
-    plt.title("Амплитуда оптического сигнала", fontsize=10)
-    plt.xlabel("x", fontsize=10)
-    plt.ylabel("A", fontsize=10)
-    plt.grid(True)
-    y_points.clear()
-    plt.subplot(2, 1, 2)
-    for i in range(len(conversion_points)):
-        temp = np.angle(conversion_points[i])
-        y_points.append(temp)
-    plt.plot(x_points, y_points,  color='blue')
-    plt.xlabel("x", fontsize=10)
-    plt.ylabel("phase", fontsize=10)
-    plt.title("Фаза оптического сигнала", fontsize=10)
-    plt.grid(True)
-    plt.savefig('Амплитуда и фаза')
+def chart(conversion_points, a, b, size):
+
+    x = np.linspace(float(a), float(b), 100)
+    y = np.linspace(float(a), float(b), 100)
+    amplitude_conv = amplitude(conversion_points, size)
+    fig, ax = plt.subplots()
+    ax.imshow(amplitude_conv)
+    fig.set_figwidth(6)
+    fig.set_figheight(6)
+    plt.savefig("амплитуда.png")
+    plt.show()
+    phase_con = phase(conversion_points, size)
+    fig, ax = plt.subplots()
+    ax.imshow(phase_con)
+    fig.set_figwidth(6)
+    fig.set_figheight(6)
+    plt.savefig("фаза.png")
     plt.show()
 
 
@@ -110,5 +107,4 @@ if __name__ == '__main__':
     n_herm_x, n_herm_y = 2, 3
     u, v = -4, 4
     res = result(a, b, u, v, n, m, sigma, n_herm_x, n_herm_y)
-    chart_3D(res, a, b)
     print(res)

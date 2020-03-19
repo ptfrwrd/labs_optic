@@ -27,7 +27,7 @@ def hermite(n, x):
 
 # подсчёт функции
 def integral_function(x, sigma, u, n_herm):
-    exp_f = 1 #cmath.exp(- x ** 2 / sigma ** 2)
+    exp_f = cmath.exp(- x ** 2 / sigma ** 2)
     exp_K = cmath.exp(- 1j * 2 * np.pi * x * u)
     #n_hermite = hermite(n_herm, x)
     return exp_f * exp_K * rect(x, T)
@@ -39,7 +39,7 @@ def numerical_method(a, b, n, sigma, n_herm, u, v, m):
     result_function = 0
     h_x = (b - a) / n
     h_e = (v - u) / m
-    for j in range(m):
+    for j in range(m + 1):
         u_l = u + j * h_e
         for k in range(n):
             x_k = a + k * h_x
@@ -59,7 +59,7 @@ def result(a, b, u, v, n, m, sigma, n_herm_x, n_herm_y):
         result_conversion.append([])
         for j in range(size):
             result_conversion[i].append(x_part[i] * y_part[j])
-    chart(result_conversion, a, b, size)
+    chart(result_conversion, u, v, size)
     return result_conversion
 
 
@@ -87,17 +87,17 @@ def phase(conversion_points, size):
 # построение графика
 def chart(conversion_points, a, b, size):
 
-    x = np.linspace(float(a), float(b), 100)
-    y = np.linspace(float(a), float(b), 100)
+    x = np.linspace(float(a), float(b), 1000)
+    y = np.linspace(float(a), float(b), 1000)
     amplitude_conv = amplitude(conversion_points, size)
     fig, ax = plt.subplots()
-    ax.imshow(amplitude_conv, extent=(a,b,a,b))
+    ax.imshow(amplitude_conv, extent=(a, b, a, b))
 
     plt.savefig("амплитуда.png")
     plt.show()
     phase_con = phase(conversion_points, size)
     fig, ax = plt.subplots()
-    ax.imshow(phase_con, extent=(a,b,a,b))
+    ax.imshow(phase_con, extent=(a, b, a, b))
 
     plt.savefig("фаза.png")
     plt.show()
@@ -110,4 +110,3 @@ if __name__ == '__main__':
     n_herm_x, n_herm_y = 2, 3
     u, v = -4, 4
     res = result(a, b, u, v, n, m, sigma, n_herm_x, n_herm_y)
-    print(res)

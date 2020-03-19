@@ -27,8 +27,8 @@ def hermite(n, x):
 
 # подсчёт функции
 def integral_function(x, sigma, u, n_herm):
-    exp_f = cmath.exp(- x ** 2 / sigma ** 2)
-    exp_K = cmath.exp(- 1j * 2 * np.pi * x * u)
+    exp_f = np.exp(- x ** 2 / sigma ** 2)
+    exp_K = np.exp(- 1j * 2 * np.pi * x * u)
     #n_hermite = hermite(n_herm, x)
     return exp_f * exp_K * rect(x, T)
 
@@ -39,26 +39,28 @@ def numerical_method(a, b, n, sigma, n_herm, u, v, m):
     result_function = 0
     h_x = (b - a) / n
     h_e = (v - u) / m
-    for j in range(m + 1):
+    for j in range(m):
         u_l = u + j * h_e
         for k in range(n):
             x_k = a + k * h_x
-            result_function += integral_function(x_k, sigma, u_l, n_herm) * h_x
-        points.append(result_function)
+            result_function += integral_function(x_k, sigma, u_l, n_herm)
+
+        points.append(result_function * h_x)
     return points
 
 
 # итоговый результат
 def result(a, b, u, v, n, m, sigma, n_herm_x, n_herm_y):
     x_part = numerical_method(a, b, n, sigma, n_herm_x, u, v, m)
-    y_part = numerical_method(a, b, n, sigma, n_herm_y, u, v, m)
+    y_part = numerical_method(a, b, n, sigma, n_herm_y, v, u, m)
 
     result_conversion = []
     size = len(x_part)
     for i in range(size):
         result_conversion.append([])
         for j in range(size):
-            result_conversion[i].append(x_part[i] * y_part[j])
+            result_conversion[i].append(x_part[j] * y_part[i])
+
     chart(result_conversion, u, v, size)
     return result_conversion
 

@@ -4,65 +4,58 @@
     sigma ** 2 = 1
     K(x, y, u, v) = exp( - 2 * pi * i * (x*u + y*v)
     f(x, y) = H_2(x) * H_3(x) * exp( (-x **2 - y **2)/ sigma ** 2)
-
 """
-
-
-import cmath
-import scipy.special as scp
 import numpy as np
 import matplotlib.pyplot as plt
 
+sigma = 1
 T = 1
 
-def rect(x, T):
+
+def rect(x):
     return abs(x) < T / 2.0
 
 
-# полином Эрмита, n - степень
-def hermite(n, x):
-    H_n= scp.eval_hermite(n, x) * np.exp(-x**2)
-    return H_n
+# temp =  x or y
+def f_temp(temp):
+    return rect(temp) * np.exp(- temp ** 2 / sigma ** 2)
 
 
-# подсчёт функции
-def integral_function(x, sigma, u, n_herm):
-    exp_f = np.exp(- x ** 2 / sigma ** 2)
-    exp_K = np.exp(- 1j * 2 * np.pi * x * u)
-    #n_hermite = hermite(n_herm, x)
-    return exp_f * exp_K * rect(x, T)
+# temp = x or y, temp_space = u or v
+def kernel(temp, temp_space):
+    return np.exp(-1j * np.pi * 2 * temp * temp_space)
 
 
-# численный подсчёт
-def numerical_method(a, b, n, sigma, n_herm, u, v, m):
-    points = []
-    result_function = 0
-    h_x = (b - a) / n
-    h_e = (v - u) / m
-    for j in range(m):
-        u_l = u + j * h_e
-        for k in range(n):
-            x_k = a + k * h_x
-            result_function += integral_function(x_k, sigma, u_l, n_herm)
-
-        points.append(result_function * h_x)
-    return points
+# 1D integral; [a, b], n - upper series limit, temp_space - u_l or v_l
+def finite_integral_1D(a, b, n, temp_space):
+    h_temp = (b - a) / n
+    temp_k, temp_series = a, 0
+    for k in range(n):
+        temp_k += h_temp
+        temp_series += h_temp * kernel(temp_k, temp_space) * f_temp(temp_k)
+    return temp_series
 
 
-# итоговый результат
-def result(a, b, u, v, n, m, sigma, n_herm_x, n_herm_y):
-    x_part = numerical_method(a, b, n, sigma, n_herm_x, u, v, m)
-    y_part = numerical_method(a, b, n, sigma, n_herm_y, v, u, m)
+# 1D integral at point: point - temp_space
+def finite_integral_at_point(a, b, n, m, u, v):
+    integral = []
+    h_space = (v - u) / m
+    for l in range(m):
+        temp_space = u + l * h_space
+        integral.append(finite_integral_1D(a, b, n, temp_space))
+    return integral
 
-    result_conversion = []
-    size = len(x_part)
-    for i in range(size):
-        result_conversion.append([])
-        for j in range(size):
-            result_conversion[i].append(x_part[j] * y_part[i])
 
-    chart(result_conversion, u, v, size)
-    return result_conversion
+# 2D integral
+def finite_integral_2D(a, b, n, m, u, v):
+    dx_integral = finite_integral_at_point(a, b, n, m, u, v)
+    dy_integral = finite_integral_at_point(a, b, n, m, u, v)
+    dx_dy_integral = []
+    for i in range(n):
+        dx_dy_integral.append([])
+        for j in range(m):
+            dx_dy_integral[i].append(dx_integral[i] * dy_integral[j])
+    return dx_dy_integral
 
 
 # амплитуда преобразования
@@ -71,8 +64,8 @@ def amplitude(conversion_points, size):
     for i in range(size):
         amplitude_conv.append([])
         for j in range(size):
-            amplitude_conv[i].append(np.sqrt(conversion_points[i][j].imag ** 2 +
-                                      + conversion_points[i][j].real ** 2))
+            amplitude_conv[i].append(np.sqrt(conversion_points[j][i].imag ** 2 +
+                                      + conversion_points[j][i].real ** 2))
     return amplitude_conv
 
 
@@ -87,28 +80,23 @@ def phase(conversion_points, size):
 
 
 # построение графика
-def chart(conversion_points, a, b, size):
+def chart(conversion_points, u, v, size):
 
-    x = np.linspace(float(a), float(b), 1000)
-    y = np.linspace(float(a), float(b), 1000)
+    x = np.linspace(float(u), float(v), 1000)
+    y = np.linspace(float(u), float(v), 1000)
     amplitude_conv = amplitude(conversion_points, size)
-    fig, ax = plt.subplots()
-    ax.imshow(amplitude_conv, extent=(a, b, a, b))
-
-    plt.savefig("амплитуда.png")
-    plt.show()
+    fig, ax = plt.subplots(ncols=1, nrows=2)
+    ax[0].imshow(amplitude_conv, extent=(u, v, u, v))
     phase_con = phase(conversion_points, size)
-    fig, ax = plt.subplots()
-    ax.imshow(phase_con, extent=(a, b, a, b))
+    ax[1].imshow(phase_con, extent=(u, v, u, v))
 
-    plt.savefig("фаза.png")
+    plt.savefig("амплитуда и фаза.png")
     plt.show()
 
 
 if __name__ == '__main__':
     a, b = -3, 3
-    n, m = 1000, 1000
-    sigma = 1
-    n_herm_x, n_herm_y = 2, 3
     u, v = -4, 4
-    res = result(a, b, u, v, n, m, sigma, n_herm_x, n_herm_y)
+    n, m = 1000, 1000
+    integral = finite_integral_2D(a, b, n, m, u, v)
+    chart(integral, u, v, n)
